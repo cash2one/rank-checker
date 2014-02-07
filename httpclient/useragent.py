@@ -108,3 +108,17 @@ def random_user_agent(agent='browser'):
     else:
         ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:54.0) Gecko/20100101 Firefox/54.0'
     return ua
+
+
+class UserAgent(object):
+
+    @staticmethod
+    def agent():
+        return "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:49.0) Gecko/20100101 Firefox/49.0"
+
+
+class RandomUserAgent(UserAgent):
+
+    @staticmethod
+    def agent(agent='browser'):
+        return random_user_agent(agent)
