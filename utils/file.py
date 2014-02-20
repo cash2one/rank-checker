@@ -6,6 +6,8 @@
 # ---------------------------------------
 
 
+from inspect import isgenerator
+
 from openpyxl.workbook import Workbook
 
 
@@ -46,8 +48,14 @@ class ExcelWriter(object):
     def add_content_cell(self, cell, value):
         self.chart[cell].value = value
 
-    def add_content(self, value=list()):
-        self.chart.append(value)
+    def add_content_row(self, row):
+        """
+        Args:
+            row: must be a list, tuple
+        """
+        if not isgenerator(row) and not isinstance(row, (list, tuple, range)):
+            raise TypeError('Value must be a list, tuple, range or a generator')
+        self.chart.append(row)
 
     def save(self):
         self.work.save(self.filename + '.xlsx')
