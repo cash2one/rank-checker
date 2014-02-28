@@ -5,7 +5,7 @@
 # Created on: 2014-02-03 21:09:18
 # ---------------------------------------
 
-
+import re
 from io import BytesIO
 from urllib.parse import urlencode
 
@@ -28,13 +28,13 @@ def get_html(url, params=None):
     url = '{}?{}'.format(url, query) if query else url
 
     c = pycurl.Curl()
-    c.setopt(pycurl.CAINFO, certifi.where())   # https
-    c.setopt(pycurl.FOLLOWLOCATION, 1)         # 自动跳转
-    c.setopt(pycurl.MAXREDIRS, 5)              # 最大重定向数
-    c.setopt(pycurl.ENCODING, 'gzip,deflate')  # Accept-Encoding
+    c.setopt(pycurl.URL, url)
 
-    agent = random_user_agent("browser")
-    c.setopt(pycurl.USERAGENT, agent)          # User-Agent
+    c.setopt(pycurl.CAINFO, certifi.where())                    # https
+    c.setopt(pycurl.FOLLOWLOCATION, 1)                          # 自动跳转
+    c.setopt(pycurl.MAXREDIRS, 5)                               # 最大重定向数
+    c.setopt(pycurl.ENCODING, 'gzip,deflate')                   # Accept-Encoding
+    c.setopt(pycurl.USERAGENT, random_user_agent("browser"))    # User-Agent
     c.setopt(pycurl.CONNECTTIMEOUT, 10)
     c.setopt(pycurl.DNS_CACHE_TIMEOUT, 10)
     c.setopt(pycurl.TIMEOUT, 300)
@@ -49,7 +49,7 @@ def get_html(url, params=None):
     c.setopt(pycurl.HEADERFUNCTION, header_stream.write)
     c.setopt(pycurl.WRITEFUNCTION, body_stream.write)
 
-    c.setopt(pycurl.URL, url)
+    # perform
     c.perform()
 
     return {
@@ -60,3 +60,34 @@ def get_html(url, params=None):
         'body': body_stream.getvalue(),
         'ip': c.getinfo(pycurl.PRIMARY_IP)
     }
+
+
+def get_effective_url(url):
+    """ 通过指定URL获取实际的URL（301, 302等等跳转后的地址）
+
+    """
+    c = pycurl.Curl()
+    c.setopt(pycurl.URL, url)
+
+    c.setopt(pycurl.CAINFO, certifi.where())  # https
+    c.setopt(pycurl.MAXREDIRS, 5)  # 最大重定向数
+    c.setopt(pycurl.ENCODING, 'gzip,deflate')  # Accept-Encoding
+    c.setopt(pycurl.USERAGENT, random_user_agent("browser"))  # User-Agent
+    c.setopt(pycurl.CONNECTTIMEOUT, 10)
+    c.setopt(pycurl.DNS_CACHE_TIMEOUT, 10)
+    c.setopt(pycurl.TIMEOUT, 300)
+
+    # HEAD request
+    c.setopt(pycurl.NOBODY, 1)
+    header_stream = BytesIO()
+    c.setopt(pycurl.HEADERFUNCTION, header_stream.write)
+
+    # perform
+    c.perform()
+
+    headers = header_stream.getvalue().decode('utf-8')
+    location_re = re.compile(r'Location:\s*(P?.*)\r\n', re.I)
+    m = re.search(location_re, headers)
+    location = m.group(1) if m else ''
+
+    return location
