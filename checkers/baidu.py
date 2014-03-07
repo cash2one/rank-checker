@@ -62,7 +62,7 @@ class BaiduChecker(object):
                     title = eval(item.next('.c-tools').attr('data-tools'))['title']
                     url = eval(item.next('.c-tools').attr('data-tools'))['url']
                     url = get_effective_url(url)
-                    print('---> 排名:[{}] 网址:[{}] 标题:[{}]'.format(index, url, url))
+                    print('---> 排名:[{}] 网址:[{}] 标题:[{}]'.format(index, url, title))
                     self.rank_storage.add_rank(keyword, url, index)
 
             # 如果当前页面有排名，就结束该关键词查询
