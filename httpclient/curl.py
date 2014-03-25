@@ -6,6 +6,9 @@
 # ---------------------------------------
 
 
+import re
+from io import BytesIO
+
 import pycurl
 import certifi
 
@@ -49,3 +52,74 @@ class CurlFactory(object):
                 curl.setopt(pycurl.PROXYTYPE, proxy_type)
                 curl.setopt(pycurl.PROXY, proxy_url)
         return curl
+
+
+class CurlResponse(object):
+
+    # Http-Status-Line regex
+    status_line_re = re.compile(b'(P?^HTTP/\d{1}\.\d{1})\s+(P?\d{3})\s+(P?.*)', re.I)
+
+    # cookie regex
+    cookie_re = re.compile(r'set-cookie:\s*(P?.*)', re.I)
+
+    # header field regex
+    header_field_re = re.compile(r'(P?^.*?):\s*(P?.*)', re.I)
+
+    def __init__(self):
+        self.__header_bytes = BytesIO()
+        self.__body_bytes = BytesIO()
+        self.__headers = None
+
+    def write_header(self, *args, **kwargs):
+        line = args[0]
+
+        # 当curl重定向时，只处理最终的header
+        if re.search(self.status_line_re, line):
+            self.__header_bytes.truncate(0)
+            self.__header_bytes.seek(0)
+        self.__header_bytes.write(*args, **kwargs)
+
+    def write_body(self, *args, **kwargs):
+        self.__body_bytes.write(*args, **kwargs)
+
+    def get_raw_header(self):
+        return self.__header_bytes.getvalue()
+
+    def headers(self):
+        if self.__headers is not None:
+            return self.__headers
+        else:
+            self.__headers = {}
+            lines = self.__header_bytes.getvalue().splitlines()
+
+            # pop status-line
+            lines.pop(0)
+
+            for line in lines:
+                line = self.decode(line)
+                if re.match(self.cookie_re, line):
+                    raw_cookie = re.match(self.cookie_re, line).group(1)
+                    if 'Set-Cookie' not in self.__headers.keys():
+                        self.__headers['Set-Cookie'] = [raw_cookie]
+                    else:
+                        self.__headers['Set-Cookie'].append(raw_cookie)
+                else:
+                    m = re.match(self.header_field_re, line)
+                    if m:
+                        key = m.group(1)
+                        value = m.group(2)
+                        self.__headers[key] = value
+
+            return self.__headers
+
+    def decode(self, bytes, encoding='utf-8'):
+        return bytes.decode(encoding)
+
+    def body(self):
+        return self.__body_bytes.getvalue()
+
+    def close(self):
+        if not self.__header_bytes.closed:
+            self.__header_bytes.close()
+        if not self.__body_bytes.closed:
+            self.__body_bytes.close()
