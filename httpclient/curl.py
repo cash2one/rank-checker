@@ -8,11 +8,25 @@
 
 import re
 from io import BytesIO
+from collections import namedtuple
 
 import pycurl
 import certifi
 
 from httpclient.useragent import random_user_agent
+
+
+# curl response
+ResponseInfo = namedtuple(
+    'ResponseInfo',
+    field_names=[
+        'status', 'ip', 'effective_url', 'total_time',
+        'name_lookup_time', 'connect_time', 'pre_transfer_time',
+        'start_transfer_time', 'redirect_time', 'size_upload',
+        'size_download', 'speed_download', 'speed_upload',
+        'header_size'
+    ]
+)
 
 
 class CurlFactory(object):
@@ -123,3 +137,82 @@ class CurlResponse(object):
             self.__header_bytes.close()
         if not self.__body_bytes.closed:
             self.__body_bytes.close()
+
+
+class CurlRequestMixin(object):
+    def process_request(self, request):
+        curl = request.curl
+        method = request.method
+
+        if method == 'GET':
+            pass
+        elif method == 'POST':
+            curl.setopt(pycurl.POSTFIELDS, request.data)
+        elif method == 'HEAD':
+            curl.setopt(pycurl.NOBODY, 1)
+
+        # add header
+        if request.headers:
+            curl.setopt(pycurl.HTTPHEADER, request.headers)
+
+        # add cookies
+        if request.cookies:
+            curl.setopt(pycurl.COOKIE, request.cookies)
+            print('cookies:', request.cookies, request.url)
+
+        # callback function for headers and body
+        curl_response = CurlResponse()
+        curl.setopt(pycurl.HEADERFUNCTION, curl_response.write_header)
+        curl.setopt(pycurl.WRITEFUNCTION, curl_response.write_body)
+        curl.setopt_string(pycurl.URL, request.url)
+
+        try:
+            curl.perform()
+        except Exception as e:
+            print(e)
+        else:
+            # 如果执行成功，绑定curl_response到curl
+            curl.curl_response = curl_response
+
+
+class CurlResponseMiXin(object):
+    def process_response(self, curl):
+        detail = self._detail_info(curl)
+        curl_response = curl.curl_response
+        headers = curl_response.headers()
+        body = curl_response.body()
+
+        # 最后清理工作
+        self._clean(curl)
+
+        return headers, body, detail
+
+    def _detail_info(self, curl):
+        # 获取response详细信息
+        info = ResponseInfo(
+            curl.getinfo(pycurl.HTTP_CODE),  # 返回的HTTP状态码
+            curl.getinfo(pycurl.PRIMARY_IP),  # 返回IP地址
+            curl.getinfo(pycurl.EFFECTIVE_URL),  # 重定向后的地址（实际起作用地址）
+            curl.getinfo(pycurl.TOTAL_TIME),  # 传输结束所消耗的总时间
+            curl.getinfo(pycurl.NAMELOOKUP_TIME),  # DNS解析所消耗的时间
+            curl.getinfo(pycurl.CONNECT_TIME),  # 建立连接所消耗的时间
+            curl.getinfo(pycurl.PRETRANSFER_TIME),  # 从建立连接到准备传输所消耗的时间
+            curl.getinfo(pycurl.STARTTRANSFER_TIME),  # 从建立连接到传输开始消耗的时间
+            curl.getinfo(pycurl.REDIRECT_TIME),  # 重定向所消耗的时间
+            curl.getinfo(pycurl.SIZE_UPLOAD),  # 上传数据包大小
+            curl.getinfo(pycurl.SIZE_DOWNLOAD),  # 下载数据包大小
+            curl.getinfo(pycurl.SPEED_DOWNLOAD),  # 平均下载速度
+            curl.getinfo(pycurl.SPEED_UPLOAD),  # 平均上传速度
+            curl.getinfo(pycurl.HEADER_SIZE)  # HTTP头部大小
+        )
+        return info
+
+    def _clean(self, curl):
+        curl.unsetopt(pycurl.COOKIE)
+        curl.unsetopt(pycurl.HTTPHEADER)
+
+        if hasattr(curl, 'curl_response'):
+            curl.curl_response.close()
+            delattr(curl, 'curl_response')
+
+        curl.reset()
