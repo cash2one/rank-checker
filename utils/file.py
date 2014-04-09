@@ -24,6 +24,20 @@ def remove_utf8_bom(file_path):
                 wf.write(body)
 
 
+def int_to_letter(column):
+    """ 将数字转化为excel的字母列，　例如　1 > A, 30 > AD
+    # More information please visit http://support.microsoft.com/kb/833402
+    """
+    result = ""
+    alpha = column // 27
+    remainder = column - (alpha * 26)
+    if alpha > 0:
+        result = chr(alpha + 64)
+    if remainder > 0:
+        result += chr(remainder + 64)
+    return result
+
+
 class ExcelWriter(object):
     """ 创建Excel文件的工具类
 
