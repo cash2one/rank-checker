@@ -7,11 +7,11 @@
 
 
 import re
-from io import BytesIO
 from collections import namedtuple
+from io import BytesIO
 
-import pycurl
 import certifi
+import pycurl
 
 from httpclient.useragent import random_user_agent
 
@@ -190,20 +190,20 @@ class CurlResponseMiXin(object):
     def _detail_info(self, curl):
         # 获取response详细信息
         info = ResponseInfo(
-            curl.getinfo(pycurl.HTTP_CODE),  # 返回的HTTP状态码
-            curl.getinfo(pycurl.PRIMARY_IP),  # 返回IP地址
-            curl.getinfo(pycurl.EFFECTIVE_URL),  # 重定向后的地址（实际起作用地址）
-            curl.getinfo(pycurl.TOTAL_TIME),  # 传输结束所消耗的总时间
-            curl.getinfo(pycurl.NAMELOOKUP_TIME),  # DNS解析所消耗的时间
-            curl.getinfo(pycurl.CONNECT_TIME),  # 建立连接所消耗的时间
-            curl.getinfo(pycurl.PRETRANSFER_TIME),  # 从建立连接到准备传输所消耗的时间
-            curl.getinfo(pycurl.STARTTRANSFER_TIME),  # 从建立连接到传输开始消耗的时间
-            curl.getinfo(pycurl.REDIRECT_TIME),  # 重定向所消耗的时间
-            curl.getinfo(pycurl.SIZE_UPLOAD),  # 上传数据包大小
-            curl.getinfo(pycurl.SIZE_DOWNLOAD),  # 下载数据包大小
-            curl.getinfo(pycurl.SPEED_DOWNLOAD),  # 平均下载速度
-            curl.getinfo(pycurl.SPEED_UPLOAD),  # 平均上传速度
-            curl.getinfo(pycurl.HEADER_SIZE)  # HTTP头部大小
+            curl.getinfo(pycurl.HTTP_CODE),             # 返回的HTTP状态码
+            curl.getinfo(pycurl.PRIMARY_IP),            # 返回IP地址
+            curl.getinfo(pycurl.EFFECTIVE_URL),         # 重定向后的地址（实际起作用地址）
+            curl.getinfo(pycurl.TOTAL_TIME),            # 传输结束所消耗的总时间
+            curl.getinfo(pycurl.NAMELOOKUP_TIME),       # DNS解析所消耗的时间
+            curl.getinfo(pycurl.CONNECT_TIME),          # 建立连接所消耗的时间
+            curl.getinfo(pycurl.PRETRANSFER_TIME),      # 从建立连接到准备传输所消耗的时间
+            curl.getinfo(pycurl.STARTTRANSFER_TIME),    # 从建立连接到传输开始消耗的时间
+            curl.getinfo(pycurl.REDIRECT_TIME),         # 重定向所消耗的时间
+            curl.getinfo(pycurl.SIZE_UPLOAD),           # 上传数据包大小
+            curl.getinfo(pycurl.SIZE_DOWNLOAD),         # 下载数据包大小
+            curl.getinfo(pycurl.SPEED_DOWNLOAD),        # 平均下载速度
+            curl.getinfo(pycurl.SPEED_UPLOAD),          # 平均上传速度
+            curl.getinfo(pycurl.HEADER_SIZE)            # HTTP头部大小
         )
         return info
 
@@ -214,5 +214,3 @@ class CurlResponseMiXin(object):
         if hasattr(curl, 'curl_response'):
             curl.curl_response.close()
             delattr(curl, 'curl_response')
-
-        curl.reset()
