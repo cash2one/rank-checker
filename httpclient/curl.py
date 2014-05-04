@@ -47,8 +47,8 @@ class CurlFactory(object):
         curl.setopt(pycurl.USERAGENT, random_user_agent("browser"))    # User-Agent
         curl.setopt(pycurl.CONNECTTIMEOUT, 10)                         # 连接的等待时间，设置为0则不等待
         curl.setopt(pycurl.DNS_CACHE_TIMEOUT, 3600)                    # DNS缓存时间
-        curl.setopt(pycurl.TIMEOUT, 30)                               # 请求超时时间
-        curl.setopt(pycurl.NOPROGRESS, True)                              # 是否屏蔽下载进度条，非0则屏蔽
+        curl.setopt(pycurl.TIMEOUT, 30)                                # 请求超时时间
+        curl.setopt(pycurl.NOPROGRESS, True)                           # 是否屏蔽下载进度条，非0则屏蔽
         curl.setopt(pycurl.NOSIGNAL, True)
 
         # 自动跳转
