@@ -58,8 +58,9 @@ class CurlFactory(object):
         # 是否保持长连接
         if not settings.get('KEEP_ALIVE_ENABLED', True):
             curl.setopt(pycurl.FORBID_REUSE, 1)
+            curl.setopt(pycurl.FRESH_CONNECT, 1)
 
-        # 处理cookies
+            # 处理cookies
         if settings.get('COOKIES_ENABLED', False):
             curl.setopt(pycurl.COOKIEFILE, 'cookies-file')
             curl.setopt(pycurl.COOKIEJAR, 'cookies-file')
