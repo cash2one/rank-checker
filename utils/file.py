@@ -50,7 +50,8 @@ class ExcelWriter(object):
 
         self.filename = filename
         self.work = Workbook()
-        self.chart = self.work.create_sheet()
+        self.chart = self.work.active
+        # self.chart = self.work.create_sheet()
         self.chart.title = title
 
     def set_column_width(self, column_dict):
