@@ -25,7 +25,6 @@ DEFAULT_SETTINGS = {
 }
 
 
-
 class HttpClient(CurlRequestMixin, CurlResponseMiXin):
 
     def __init__(self, **kwargs):
@@ -57,7 +56,7 @@ class HttpClient(CurlRequestMixin, CurlResponseMiXin):
         self.process_request(wrapped_req)
 
         response = self.process_response(wrapped_req.curl)
-        print(response[2])
+        return response
 
     def wrap_request(self, request):
         # merge headers
